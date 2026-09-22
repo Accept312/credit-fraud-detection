@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信用卡欺诈检测 · 数据挖掘作品集</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F766E'/%3E%3Ccircle cx='14' cy='14' r='7' fill='none' stroke='%23FDFDF9' stroke-width='2.4'/%3E%3Cpath d='m19 19 7 7' stroke='%23FDFDF9' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M12 14h4' stroke='%230F766E' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<style>
+:root{
+  --paper:#FAF9F6;
+  --card:#FFFFFF;
+  --ink:#1C2B2A;
+  --ink-soft:#52625F;
+  --brand:#0F766E;
+  --brand-deep:#0B3D38;
+  --brand-ink:#0C2E2A;
+  --brand-mist:#E7F0EE;
+  --accent:#C2410C;
+  --accent-mist:#FBF0E6;
+  --line:#E3E8E5;
+  --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.75;
+  font-size:16px;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+a{color:inherit;text-decoration:none;}
+
+/* ===== 顶部导航 ===== */
+.nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(250,249,246,.92);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:62px;}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.02em;}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;background:var(--brand);
+  display:inline-flex;align-items:center;justify-content:center;color:#fff;
+}
+.nav-links{display:flex;gap:26px;font-size:14px;color:var(--ink-soft);}
+.nav-links a{padding:6px 2px;border-bottom:2px solid transparent;transition:color .18s,border-color .18s;}
+.nav-links a:hover{color:var(--brand);border-color:var(--brand);}
+
+/* ===== Hero ===== */
+.hero{
+  background:
+    radial-gradient(1000px 520px at 85% -10%, rgba(28,139,124,.32), transparent 62%),
+    radial-gradient(800px 460px at -8% 110%, rgba(23,108,98,.42), transparent 60%),
+    linear-gradient(160deg, #0B2B28 0%, #0D3B35 55%, #0F4C43 100%);
+  color:#F4FBF8;
+  padding:84px 0 76px;
+  overflow:hidden;
+}
+.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:56px;align-items:center;}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;letter-spacing:.14em;color:#9FD8CE;
+  border:1px solid rgba(159,216,206,.35);border-radius:999px;
+  padding:5px 14px;margin-bottom:22px;
+}
+.hero-kicker::before{content:"";width:6px;height:6px;border-radius:50%;background:#7DD3C0;}
+.hero h1{
+  font-family:"Noto Serif SC",serif;
+  font-size:46px;line-height:1.22;font-weight:900;
+  letter-spacing:.01em;margin-bottom:18px;
+}
+.hero h1 .accent{color:#F2B56B;}
+.hero-sub{font-size:16.5px;color:#C9E2DC;max-width:35em;font-weight:300;margin-bottom:28px;}
+.hero-tags{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px;}
+.hero-tags span{
+  font-size:13px;color:#D8EEE9;background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:4px 12px;
+}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:11px 22px;border-radius:8px;font-size:14.5px;font-weight:500;
+  transition:transform .15s,box-shadow .15s,background .15s;
+}
+.btn-primary{background:var(--accent);color:#FFF7F0;}
+.btn-primary:hover{background:#A83A0B;transform:translateY(-1px);box-shadow:0 8px 22px rgba(194,65,12,.35);}
+.btn-ghost{border:1px solid rgba(255,255,255,.35);color:#EAF7F3;}
+.btn-ghost:hover{background:rgba(255,255,255,.1);transform:translateY(-1px);}
+
+/* 指标卡组 */
+.metric-panel{
+  background:rgba(8,30,27,.72);
+  border:1px solid #24514B;border-radius:14px;
+  padding:22px 22px 8px;
+  box-shadow:0 30px 60px -18px rgba(0,0,0,.5);
+}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.metric{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);
+  border-radius:10px;padding:15px 16px;
+}
+.metric .v{font-family:"Noto Serif SC",serif;font-size:25px;font-weight:900;color:#F4FBF8;}
+.metric .v em{font-style:normal;font-size:14px;color:#F2C78B;font-weight:700;}
+.metric .k{font-size:12px;color:#9CC7BD;margin-top:3px;letter-spacing:.04em;}
+.metric .s{font-family:var(--mono);font-size:11px;color:#5E8F86;margin-top:2px;}
+.chart-mini{height:118px;margin-top:16px;}
+
+@keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.hero-grid>*{animation:rise .7s ease both;}
+.hero-grid>*:nth-child(2){animation-delay:.15s;}
+@media (prefers-reduced-motion:reduce){.hero-grid>*{animation:none;}}
+
+/* ===== 区块通用 ===== */
+section{padding:76px 0;}
+.section-head{margin-bottom:44px;}
+.section-head .sec-tag{
+  display:inline-block;font-size:13px;font-weight:500;color:var(--brand);
+  background:var(--brand-mist);border-radius:999px;padding:3px 12px;margin-bottom:14px;
+}
+.section-head h2{
+  font-family:"Noto Serif SC",serif;font-size:33px;font-weight:700;letter-spacing:.01em;
+}
+.section-head p{margin-top:10px;color:var(--ink-soft);max-width:46em;}
+
+/* ===== 项目概览 ===== */
+.overview-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;}
+.ov-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:26px;}
+.ov-card h3{font-size:17px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.ov-card h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);}
+.ov-card p{font-size:14px;color:var(--ink-soft);}
+.ov-list{list-style:none;}
+.ov-list li{display:flex;gap:10px;font-size:14px;padding:7px 0;color:var(--ink);align-items:flex-start;}
+.ov-list li b{color:var(--brand);font-weight:600;flex:0 0 92px;}
+.ov-list li svg{flex:0 0 18px;margin-top:4px;color:var(--brand);}
+
+/* ===== 数据洞察 ===== */
+.insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.chart-card{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:22px 20px 14px;
+}
+.chart-card h3{font-size:15.5px;font-weight:600;margin-bottom:4px;}
+.chart-card .cap{font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;}
+.chart-box{height:260px;}
+.chart-card .note{font-family:var(--mono);font-size:11px;color:var(--ink-soft);padding:6px 0 4px;border-top:1px dashed var(--line);margin-top:6px;}
+
+/* ===== 方法流程 ===== */
+.meth{background:var(--brand-ink);border-radius:16px;padding:38px 34px;color:#DCEFE9;}
+.meth-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:26px;}
+.meth-head h3{font-family:"Noto Serif SC",serif;font-size:22px;font-weight:700;color:#F4FBF8;}
+.meth-head span{font-size:12.5px;color:#8FBEB4;}
+.meth-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.meth-step{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);
+  border-radius:10px;padding:16px 16px 14px;position:relative;
+}
+.meth-step .no{font-family:var(--mono);font-size:12px;color:#F2C78B;margin-bottom:8px;}
+.meth-step h4{font-size:14.5px;font-weight:600;color:#F4FBF8;margin-bottom:6px;}
+.meth-step p{font-size:12.5px;color:#C9E2DC;}
+.meth-arrow{display:flex;justify-content:center;color:#5FA396;margin-top:14px;}
+.meth-arrow svg{transform:rotate(90deg);}
+.meth-foot{margin-top:20px;padding-top:16px;border-top:1px dashed rgba(255,255,255,.18);font-size:13px;color:#9CC7BD;display:flex;flex-wrap:wrap;gap:8px 22px;}
+.meth-foot b{color:#DCEFE9;font-weight:500;}
+
+/* ===== 模型评估 ===== */
+.eval-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.eval-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;}
+.eval-card h3{font-size:16px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:9px;}
+.eval-card h3 .dot{width:8px;height:8px;border-radius:2px;background:var(--brand);}
+.cm{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px;}
+.cm th,.cm td{border:1px solid var(--line);padding:9px 6px;text-align:center;}
+.cm th{background:var(--brand-mist);color:var(--brand-deep);font-weight:600;}
+.cm td.tp{color:#B45309;font-weight:700;}
+.eval-card ul{list-style:none;}
+.eval-card ul li{font-size:13.5px;color:var(--ink-soft);padding:5px 0 5px 18px;position:relative;}
+.eval-card ul li::before{content:"";position:absolute;left:0;top:13px;width:7px;height:7px;border-radius:50%;background:var(--brand);}
+.threshold-box{
+  margin-top:20px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:22px 26px;display:flex;flex-wrap:wrap;gap:14px;
+}
+.t-item{flex:1;min-width:210px;background:#F5F8F6;border:1px solid var(--line);border-radius:10px;padding:14px 18px;}
+.t-item h4{font-size:14px;font-weight:600;margin-bottom:4px;}
+.t-item h4 span{font-family:var(--mono);font-size:12px;color:var(--brand);margin-left:6px;}
+.t-item p{font-size:12.5px;color:var(--ink-soft);}
+
+/* ===== 技术栈 ===== */
+.stack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.stack-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px 22px;}
+.stack-card h3{font-size:15.5px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:9px;}
+.stack-card h3 .dot{width:8px;height:8px;border-radius:2px;background:var(--brand);}
+.stack-card:nth-child(2) h3 .dot{background:#0E7490;}
+.stack-card:nth-child(3) h3 .dot{background:#B45309;}
+.stack-card:nth-child(4) h3 .dot{background:#475569;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  font-size:12.5px;color:var(--ink);background:var(--chip-bg,#F0F5F3);
+  border:1px solid var(--line);border-radius:6px;padding:3px 10px;
+}
+.stack-note{margin-top:12px;font-size:12.5px;color:var(--ink-soft);}
+
+/* ===== 结论 ===== */
+.conc-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;}
+.conc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px;}
+.conc-card h3{font-size:17px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.conc-card h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);}
+.conc-list{list-style:none;}
+.conc-list li{display:flex;gap:11px;font-size:14px;color:var(--ink);padding:7px 0;align-items:flex-start;}
+.conc-list li svg{flex:0 0 18px;margin-top:4px;color:var(--brand);}
+.conc-card.note{border-color:#F0D9B8;background:#FFFDF8;}
+.conc-card.note h3 .dot{background:var(--accent);}
+.conc-card.note li svg{color:var(--accent);}
+
+/* ===== 部署 ===== */
+.dep{background:var(--brand-ink);border-radius:16px;padding:38px 34px;color:#DCEFE9;}
+.dep h3{font-family:"Noto Serif SC",serif;font-size:22px;font-weight:700;color:#F4FBF8;margin-bottom:8px;}
+.dep-sub{font-size:13.5px;color:#9CC7BD;margin-bottom:24px;}
+.dep-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:26px;align-items:start;}
+.dep-tree{
+  font-family:var(--mono);font-size:12.5px;line-height:1.95;color:#BFE3DC;
+  background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:18px 22px;
+  white-space:pre;overflow-x:auto;
+}
+.dep-tree b{color:#F2C78B;font-weight:600;}
+.dep-steps{list-style:none;counter-reset:step;}
+.dep-steps li{
+  counter-increment:step;display:flex;gap:14px;padding:9px 0;
+  font-size:13.5px;color:#C9E2DC;align-items:flex-start;
+}
+.dep-steps li::before{
+  content:counter(step);flex:0 0 26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:12px;color:#F2C78B;margin-top:1px;
+}
+.dep-steps li b{color:#F4FBF8;font-weight:500;}
+
+/* ===== Footer ===== */
+footer{border-top:1px solid var(--line);padding:30px 0 36px;text-align:center;color:var(--ink-soft);font-size:13px;}
+footer .f-line{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;}
+
+/* ===== 响应式 ===== */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:38px;}
+  .hero h1{font-size:37px;}
+  .stack-grid{grid-template-columns:repeat(2,1fr);}
+  .insight-grid{grid-template-columns:1fr;}
+  .eval-grid{grid-template-columns:1fr;}
+  .meth-steps{grid-template-columns:1fr 1fr;}
+  .overview-grid{grid-template-columns:1fr;}
+  .dep-grid{grid-template-columns:1fr;}
+}
+@media (max-width:640px){
+  .nav-inner{height:56px;}
+  .nav-links{display:none;}
+  section{padding:58px 0;}
+  .hero{padding:60px 0 56px;}
+  .hero h1{font-size:29px;}
+  .stack-grid{grid-template-columns:1fr;}
+  .meth-steps{grid-template-columns:1fr;}
+  .conc-grid{grid-template-columns:1fr;}
+  .metric-grid{grid-template-columns:1fr 1fr;}
+  .metric .v{font-size:21px;}
+  .wrap{padding:0 20px;}
+  .dep{padding:28px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 导航 ===== -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+      </span>
+      欺诈检测
+    </div>
+    <nav class="nav-links">
+      <a href="#overview">项目概览</a>
+      <a href="#insights">数据洞察</a>
+      <a href="#method">方法流程</a>
+      <a href="#evaluation">模型评估</a>
+      <a href="#stack">技术栈</a>
+      <a href="#deploy">部署</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="hero-kicker">数据挖掘实训项目 · 机器学习</span>
+      <h1>信用卡<span class="accent">欺诈检测</span></h1>
+      <p class="hero-sub">
+        面向极度不平衡二分类场景，基于 SMOTE 过采样、随机森林特征工程与多模型对比，在海量正常交易中精准识别极少数欺诈行为，并针对业务风险偏好提供阈值调优方案。
+      </p>
+      <div class="hero-tags">
+        <span>Python</span><span>Scikit-learn</span><span>SMOTE</span><span>Random Forest</span><span>Logistic Regression</span><span>t-SNE</span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#evaluation">模型评估</a>
+        <a class="btn btn-ghost" href="#deploy">代码部署</a>
+      </div>
+    </div>
+    <div class="metric-panel" aria-label="关键指标">
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="v">98.36<em>%</em></div>
+          <div class="k">召回率峰值（阈值 0.1）</div>
+          <div class="s">Recall@0.1</div>
+        </div>
+        <div class="metric">
+          <div class="v">0.975<em>25</em></div>
+          <div class="k">最优 AUC-PR（阈值 0.6）</div>
+          <div class="s">AUC-PR@0.6</div>
+        </div>
+        <div class="metric">
+          <div class="v">284,807</div>
+          <div class="k">交易样本规模</div>
+          <div class="s">Kaggle creditcard.csv</div>
+        </div>
+        <div class="metric">
+          <div class="v">0.17<em>%</em></div>
+          <div class="k">欺诈交易占比</div>
+          <div class="s">极度不平衡</div>
+        </div>
+      </div>
+      <div id="chartMini" class="chart-mini" aria-label="召回率随阈值变化迷你图"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 项目概览 ===== -->
+<section id="overview">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">OVERVIEW</span>
+      <h2>项目概览</h2>
+      <p>传统规则式反欺诈难以应对日益复杂的欺诈手段，机器学习为欺诈检测提供了新解法。</p>
+    </div>
+    <div class="overview-grid">
+      <div class="ov-card">
+        <h3><span class="dot"></span>问题背景</h3>
+        <p>信用卡欺诈每年给金融机构与消费者带来巨大经济损失。随着交易量增加，欺诈行为日益复杂多样，依赖规则与专家经验的方法难以招架。本项目运用数据挖掘与机器学习技术，构建分类模型预测交易是否欺诈，同时分析欺诈交易的特征模式与分布规律。</p>
+        <h3 style="margin-top:22px;"><span class="dot"></span>数据集</h3>
+        <p>Kaggle 信用卡欺诈公开数据集（creditcard.csv）：</p>
+        <ul class="ov-list" style="margin-top:8px;">
+          <li><b>特征</b>V1~V28（PCA 处理后的数值特征）、Time、Amount</li>
+          <li><b>标签</b>Class：0 正常交易 / 1 欺诈交易</li>
+          <li><b>规模</b>284,807 笔交易，欺诈占比约 0.17%，极度类别不平衡</li>
+        </ul>
+      </div>
+      <div class="ov-card">
+        <h3><span class="dot"></span>任务目标</h3>
+        <ul class="ov-list">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">预测任务</b>构建二分类模型，尽可能识别出所有欺诈交易（高召回率），同时避免过多正常交易被误判（可接受查准率）。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">描述任务</b>通过 t-SNE 降维与聚类分析，揭示欺诈交易的特征模式、分布规律。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">评价指标</b>核心：F1 分数、AUC-ROC；辅助：混淆矩阵、Precision-Recall 曲线。</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 数据洞察 ===== -->
+<section id="insights" style="background:#F3F6F4;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">INSIGHTS</span>
+      <h2>数据洞察</h2>
+      <p>围绕类别分布、金额、时间与特征变量开展探索性分析，为建模与特征工程提供依据。</p>
+    </div>
+    <div class="insight-grid">
+      <div class="chart-card">
+        <h3>类别不平衡分布</h3>
+        <div class="cap">正常交易 284,315 vs 欺诈交易 492</div>
+        <div id="chartImbalance" class="chart-box"></div>
+        <div class="note">数据来源：Kaggle creditcard.csv 公开数据集</div>
+      </div>
+      <div class="chart-card">
+        <h3>召回率随阈值变化</h3>
+        <div class="cap">阈值 0.1 → 0.9，召回率 0.9836 → 0.9014 持续下降</div>
+        <div id="chartRecall" class="chart-box"></div>
+        <div class="note">数据点来自实验记录，中间趋势为单调下降</div>
+      </div>
+      <div class="chart-card">
+        <h3>AUC-PR 随阈值变化</h3>
+        <div class="cap">阈值 0.6 时达到峰值 0.97525，此后略有回落</div>
+        <div id="chartAUCPR" class="chart-box"></div>
+        <div class="note">所有阈值下 AUC-PR 均在 0.92 以上</div>
+      </div>
+    </div>
+    <div class="eval-grid" style="margin-top:18px;">
+      <div class="eval-card">
+        <h3><span class="dot"></span>金额特征</h3>
+        <ul>
+          <li>欺诈交易金额相比正常交易呈现"小而散"的特点。</li>
+          <li>盗刷者为不引起卡主注意，更偏向小额消费。</li>
+        </ul>
+      </div>
+      <div class="eval-card">
+        <h3><span class="dot"></span>时间特征</h3>
+        <ul>
+          <li>每天 9:00–23:00 为信用卡消费高频时段。</li>
+          <li>Time 由秒转换为小时，便于周期特征建模。</li>
+        </ul>
+      </div>
+      <div class="eval-card">
+        <h3><span class="dot"></span>特征筛选</h3>
+        <ul>
+          <li>V8、V13、V15、V20~V28 等 12 个变量无法很好区分类别，予以剔除。</li>
+          <li>V17、V16 等经随机森林重要性排序确认为关键特征。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 方法流程 ===== -->
+<section id="method">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">METHOD</span>
+      <h2>方法流程</h2>
+      <p>完整实践数据挖掘全流程：预处理 → 类别平衡 → 特征工程 → 建模 → 评估调优。</p>
+    </div>
+    <div class="meth">
+      <div class="meth-head">
+        <h3>五步流水线</h3>
+        <span>Prediction + Description 双任务覆盖</span>
+      </div>
+      <div class="meth-steps">
+        <div class="meth-step">
+          <div class="no">STEP 01</div>
+          <h4>数据预处理</h4>
+          <p>Amount 缩放至 [0,1]，Time 由秒转小时；V1~V28 为 PCA 结果无需再处理。</p>
+        </div>
+        <div class="meth-step">
+          <div class="no">STEP 02</div>
+          <h4>类别平衡</h4>
+          <p>应用 SMOTE 合成少数类过采样技术，使正负样本接近，缓解类别不平衡。</p>
+        </div>
+        <div class="meth-step">
+          <div class="no">STEP 03</div>
+          <h4>特征工程</h4>
+          <p>随机森林 Gini/Permutation 重要性排序，剔除无效变量，降低维度与噪声。</p>
+        </div>
+        <div class="meth-step">
+          <div class="no">STEP 04</div>
+          <h4>模型构建</h4>
+          <p>逻辑回归、随机森林多模型对比训练，抽取单棵树可视化验证学习结构。</p>
+        </div>
+        <div class="meth-step">
+          <div class="no">STEP 05</div>
+          <h4>评估调优</h4>
+          <p>混淆矩阵 + ROC/AUC + PR 曲线全面评估，结合业务场景进行阈值调优。</p>
+        </div>
+      </div>
+      <div class="meth-arrow"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v10m0 0 4-4m-4 4L4 8"/></svg></div>
+      <div class="meth-foot">
+        <span><b>过采样</b> SMOTE 合成少数类</span>
+        <span><b>特征选择</b> 随机森林重要性排序</span>
+        <span><b>降维</b> t-SNE + 聚类分析</span>
+        <span><b>多模型</b> 逻辑回归 · 随机森林</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 模型评估 ===== -->
+<section id="evaluation" style="background:#F3F6F4;border-top:1px solid var(--line);border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">EVALUATION</span>
+      <h2>模型评估</h2>
+      <p>用混淆矩阵、ROC-AUC 与 Precision-Recall 曲线量化模型能力，并给出业务化的阈值选择策略。</p>
+    </div>
+    <div class="eval-grid">
+      <div class="eval-card">
+        <h3><span class="dot"></span>混淆矩阵</h3>
+        <table class="cm">
+          <colgroup><col style="width:32%"><col style="width:34%"><col style="width:34%"></colgroup>
+          <tr><th></th><th>预测欺诈</th><th>预测正常</th></tr>
+          <tr><th>实际欺诈</th><td class="tp">TP 真正例</td><td>FN 假负例</td></tr>
+          <tr><th>实际正常</th><td>FP 假正例</td><td class="tp">TN 真负例</td></tr>
+        </table>
+        <ul style="margin-top:16px;">
+          <li>Accuracy / Precision / Recall / F1-Score 均由混淆矩阵导出。</li>
+        </ul>
+      </div>
+      <div class="eval-card">
+        <h3><span class="dot"></span>ROC 与 AUC</h3>
+        <ul>
+          <li>AUC = ROC 曲线下面积，取值 [0,1]。</li>
+          <li>AUC=0.5 与随机猜测相当，AUC=1.0 完美分类，AUC&gt;0.9 性能优秀。</li>
+          <li>本项目各阈值下 AUC-PR 均高于 0.92，识别能力优秀。</li>
+        </ul>
+      </div>
+      <div class="eval-card">
+        <h3><span class="dot"></span>PR 权衡</h3>
+        <ul>
+          <li>召回率趋近 1.0 时精确率快速下降，体现"抓得越多、错得越多"的典型权衡。</li>
+          <li>在高度不平衡数据中保持高召回率与较高精确率，表现难得。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="threshold-box">
+      <div class="t-item">
+        <h4>高风险拦截优先<span>阈值 0.1–0.3</span></h4>
+        <p>大额、跨境交易等高风险场景，以高召回率确保欺诈被拦截，可牺牲部分用户体验。</p>
+      </div>
+      <div class="t-item">
+        <h4>综合性能最优<span>阈值 0.6</span></h4>
+        <p>AUC-PR 最高（0.97525），精确率与召回率平衡最好，适合大多数信用卡欺诈场景。</p>
+      </div>
+      <div class="t-item">
+        <h4>用户体验优先<span>阈值 0.7–0.9</span></h4>
+        <p>小额日常交易等低风险场景，减少对正常用户的干扰，接受一定程度的欺诈漏判。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 技术栈 ===== -->
+<section id="stack">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">STACK</span>
+      <h2>技术栈</h2>
+      <p>以 Python 数据科学生态完成全流程，模型与数据均开源可复现。</p>
+    </div>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <h3><span class="dot"></span>数据处理</h3>
+        <div class="chips"><span class="chip">Pandas</span><span class="chip">NumPy</span></div>
+        <p class="stack-note">数据加载、清洗、特征缩放与结构化分析。</p>
+      </div>
+      <div class="stack-card">
+        <h3><span class="dot"></span>机器学习</h3>
+        <div class="chips"><span class="chip">Scikit-learn</span><span class="chip">Logistic Regression</span><span class="chip">Random Forest</span></div>
+        <p class="stack-note">多模型对比训练与统一评估框架。</p>
+      </div>
+      <div class="stack-card">
+        <h3><span class="dot"></span>类别平衡</h3>
+        <div class="chips"><span class="chip">Imbalanced-learn</span><span class="chip">SMOTE</span></div>
+        <p class="stack-note">合成少数类过采样，缓解极端类别不平衡。</p>
+      </div>
+      <div class="stack-card">
+        <h3><span class="dot"></span>可视化</h3>
+        <div class="chips"><span class="chip">Matplotlib</span><span class="chip">Seaborn</span><span class="chip">t-SNE</span></div>
+        <p class="stack-note">分布分析、降维聚类与评估曲线绘制。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 结论 ===== -->
+<section id="conclusion" style="background:#F3F6F4;border-top:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">SUMMARY</span>
+      <h2>结论与收获</h2>
+      <p>从问题定义到方案落地，完整走过数据挖掘全流程，并深入理解不平衡分类的评估与取舍。</p>
+    </div>
+    <div class="conc-grid">
+      <div class="conc-card">
+        <h3><span class="dot"></span>关键收获</h3>
+        <ul class="conc-list">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">数据预处理</b>熟练应用 SMOTE 过采样技术处理类别不平衡问题。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">特征工程</b>通过随机森林特征重要性识别出 V17、V16 等关键特征。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">模型构建</b>实现逻辑回归、随机森林多模型对比与单树可视化。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">评估优化</b>深入理解召回率/精确率的业务意义，掌握阈值调优方法。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b style="flex:none;">系统思维</b>培养从问题定义到方案落地的完整思考与批判性思维。</span></li>
+        </ul>
+      </div>
+      <div class="conc-card note">
+        <h3><span class="dot"></span>不足与改进</h3>
+        <ul class="conc-list">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>特征已 PCA 降维，缺乏原始交易的业务解释。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>缺少用户历史行为、商户信息等上下文数据。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>未考虑误报成本与人工复核流程等业务约束。</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>未来可引入商户风险评分、地理位置等外部数据，尝试 CNN/RNN 等深度学习方法。</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 部署 ===== -->
+<section id="deploy">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="sec-tag">DEPLOY</span>
+      <h2>代码与数据部署</h2>
+      <p>完整可复现的 Python 项目随作品集一并交付，代码上传 GitHub 仓库即可对外展示。</p>
+    </div>
+    <div class="dep">
+      <h3>项目仓库结构</h3>
+      <p class="dep-sub">代码、脚本、依赖与文档齐全，按模块化流程组织。</p>
+      <div class="dep-grid">
+        <div class="dep-tree"><b>credit-fraud-detection/</b>
+├── README.md             项目说明与运行指南
+├── requirements.txt      依赖清单
+├── scripts/
+│   ├── download_data.py  Kaggle 数据下载
+│   ├── 01_preprocessing.py  缩放 + SMOTE
+│   ├── 02_feature_engineering.py  特征重要性 + t-SNE
+│   ├── 03_model_training.py  逻辑回归/随机森林
+│   └── 04_evaluation.py  混淆矩阵 + ROC/PR + 阈值
+└── data/                 （原始数据不入库，见 LFS）</div>
+        <ol class="dep-steps">
+          <li><span><b>上传代码</b>：本地新建仓库，push 上述代码目录，GitHub 可直接在线浏览与下载。</span></li>
+          <li><span><b>数据方案</b>：原始 creditcard.csv 约 150MB 超 GitHub 100MB 限制，用 Git LFS 追踪 <span style="font-family:var(--mono);">data/*.csv</span>，或仅提交采样数据。</span></li>
+          <li><span><b>运行复现</b>：<span style="font-family:var(--mono);">pip install -r requirements.txt</span> 后按 01→04 顺序执行，输出评估图与指标。</span></li>
+          <li><span><b>作品集展示</b>：本页部署至 GitHub Pages，与乐游旅行网、Like Music 组成系列作品集。</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="f-line">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-4.5-8-11a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 6.5-8 11-8 11z"/></svg>
+      个人实训作品集 · 页面内容已脱敏
+    </div>
+    <div>© 2026 · 信用卡欺诈检测 · 数据挖掘实训项目</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>
+var inkDark = '#1C2B2A';
+var brand = '#0F766E';
+var accent = '#C2410C';
+var amber = '#F2C78B';
+var soft = '#52625F';
+var grid = {left:42,right:16,top:26,bottom:28};
+
+function mk(el){
+  return echarts.init(document.getElementById(el), null, {renderer:'canvas'});
+}
+
+/* 迷你图：召回率随阈值下降 */
+(function(){
+  var el = document.getElementById('chartMini');
+  if(!el || !window.echarts) return;
+  var c = echarts.init(el);
+  c.setOption({
+    grid:{left:8,right:8,top:12,bottom:4,containLabel:true},
+    xAxis:{type:'category',data:['0.1','0.9'],axisLabel:{color:'#9CC7BD',fontSize:10},axisLine:{lineStyle:{color:'rgba(255,255,255,.2)'}},axisTick:{show:false}},
+    yAxis:{type:'value',min:0.88,max:1,axisLabel:{color:'#9CC7BD',fontSize:10,formatter:function(v){return v.toFixed(2);}},splitLine:{lineStyle:{color:'rgba(255,255,255,.08)'}}},
+    series:[{
+      type:'line',data:[0.9836,0.9014],smooth:false,symbolSize:7,
+      lineStyle:{color:amber,width:2.5},
+      itemStyle:{color:amber},
+      label:{show:true,color:'#F4FBF8',fontSize:10,formatter:function(p){return (p.value*100).toFixed(2)+'%';}}
+    }]
+  });
+})();
+
+/* 类别不平衡 */
+(function(){
+  var el = document.getElementById('chartImbalance');
+  if(!el || !window.echarts) return;
+  var c = echarts.init(el);
+  c.setOption({
+    grid:grid,
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:function(ps){
+      var p = ps[0];
+      return p.name + '：' + p.value.toLocaleString() + ' 笔';
+    }},
+    xAxis:{type:'category',data:['正常交易','欺诈交易'],axisLabel:{color:soft,fontSize:12},axisLine:{lineStyle:{color:'#C9D6D2'}},axisTick:{show:false}},
+    yAxis:{type:'value',axisLabel:{color:soft,fontSize:11,formatter:function(v){return v>=1000?(v/1000)+'k':v;}},splitLine:{lineStyle:{color:'#EDF2EF'}}},
+    series:[{
+      type:'bar',barWidth:54,
+      data:[
+        {value:284315,itemStyle:{color:brand,borderRadius:[6,6,0,0]}},
+        {value:492,itemStyle:{color:accent,borderRadius:[6,6,0,0]}}
+      ],
+      label:{show:true,position:'top',color:inkDark,fontSize:11,formatter:function(p){return p.value.toLocaleString();}}
+    }]
+  });
+})();
+
+/* 召回率 vs 阈值 */
+(function(){
+  var el = document.getElementById('chartRecall');
+  if(!el || !window.echarts) return;
+  var c = echarts.init(el);
+  c.setOption({
+    grid:grid,
+    tooltip:{trigger:'axis',formatter:function(ps){
+      var p = ps[0];
+      return '阈值 ' + p.name + '：召回率 ' + (p.value*100).toFixed(2) + '%';
+    }},
+    xAxis:{type:'category',data:['0.1','0.9'],axisLabel:{color:soft,fontSize:12},axisLine:{lineStyle:{color:'#C9D6D2'}},axisTick:{show:false}},
+    yAxis:{type:'value',min:0.88,max:1,axisLabel:{color:soft,fontSize:11,formatter:function(v){return v.toFixed(2);}},splitLine:{lineStyle:{color:'#EDF2EF'}}},
+    series:[{
+      type:'line',data:[0.9836,0.9014],smooth:false,symbolSize:8,
+      lineStyle:{color:brand,width:3},
+      itemStyle:{color:brand},
+      label:{show:true,color:inkDark,fontSize:11,formatter:function(p){return (p.value*100).toFixed(2)+'%';}}
+    }]
+  });
+})();
+
+/* AUC-PR vs 阈值 */
+(function(){
+  var el = document.getElementById('chartAUCPR');
+  if(!el || !window.echarts) return;
+  var c = echarts.init(el);
+  c.setOption({
+    grid:grid,
+    tooltip:{trigger:'axis',formatter:function(ps){
+      var p = ps[0];
+      return '阈值 ' + p.name + '：AUC-PR ' + p.value.toFixed(4);
+    }},
+    xAxis:{type:'category',data:['0.1','0.6','0.9'],axisLabel:{color:soft,fontSize:12},axisLine:{lineStyle:{color:'#C9D6D2'}},axisTick:{show:false}},
+    yAxis:{type:'value',min:0.9,max:1,axisLabel:{color:soft,fontSize:11,formatter:function(v){return v.toFixed(2);}},splitLine:{lineStyle:{color:'#EDF2EF'}}},
+    series:[{
+      type:'line',data:[0.92549,0.97525,null],connectNulls:false,smooth:true,symbolSize:8,
+      lineStyle:{color:accent,width:3},
+      itemStyle:{color:accent},
+      label:{show:true,color:inkDark,fontSize:11,formatter:function(p){return p.value==null?'':p.value.toFixed(4);}},
+      markPoint:{data:[{type:'max',name:'峰值',itemStyle:{color:'#B45309'},label:{color:'#fff',fontSize:10}}]}
+    }]
+  });
+})();
+</script>
+</body>
+</html>
