@@ -1,0 +1,7 @@
+# 原始数据不入库；采样数据可入库（小于 100MB）
+data/*.csv
+data/*.zip
+__pycache__/
+*.pyc
+output/
+*.png
